@@ -1,6 +1,15 @@
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 
+use indicatif::ProgressBar;
+use rand::rngs::OsRng;
+
+use rsa::{RsaPrivateKey, RsaPublicKey};
+
+use std::error::Error;
+
+pub struct Cli {}
+
 pub struct Client {
     pub username: String,
     pub connection: TcpStream,
