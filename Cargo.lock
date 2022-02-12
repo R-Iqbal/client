@@ -78,6 +78,7 @@ dependencies = [
  "console",
  "dialoguer",
  "indicatif",
+ "pkcs1",
  "rand",
  "rsa",
  "serde",

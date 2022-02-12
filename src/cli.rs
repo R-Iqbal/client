@@ -33,7 +33,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let username = terminal.request_username()?;
 
     // Create a new client which will connect to the server
-    let mut client = chat::Client::new(username)?;
+    let mut client = chat::Client::new(username, keypair)?;
 
     // Create a byte buffer to read in the data from the server
     let mut data = [0 as u8; 200]; // using 50 byte buffer
@@ -47,6 +47,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
             // Parse the message to determine what we have just recieved
 
             println!("Message is: {}", message);
+
             let parsed_message: SocketMessage = serde_json::from_str(&message).unwrap();
 
             match parsed_message.data {

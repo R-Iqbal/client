@@ -5,11 +5,15 @@ use dialoguer::{
     theme::{ColorfulTheme, Theme},
     Input,
 };
+
 use indicatif::ProgressBar;
 use rand::rngs::OsRng;
 use rsa::{RsaPrivateKey, RsaPublicKey};
 
-pub struct Keypair(RsaPublicKey, RsaPrivateKey);
+pub struct Keypair {
+    pub public_key: RsaPublicKey,
+    private_key: RsaPrivateKey,
+}
 
 pub struct Terminal {
     term: Term,
@@ -67,7 +71,10 @@ impl Terminal {
         // Remove the placeholder message which is associated with the loading bar
         progress_bar.abandon_with_message("");
 
-        return Ok(Keypair(public_key, private_key));
+        return Ok(Keypair {
+            public_key,
+            private_key,
+        });
     }
 }
 
