@@ -16,11 +16,11 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(username: String) -> Result<Client, std::io::Error> {
+    // Creates a new client which connects to the server
+    pub fn new(username: String) -> Result<Client, Box<dyn Error>> {
         let mut connection = TcpStream::connect("127.0.0.1:3040")?;
 
         let string = format!("!username {}", username);
-
         connection.write(string.trim().as_bytes())?;
         Ok(Client {
             username,

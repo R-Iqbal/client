@@ -1,75 +1,72 @@
-use std::error::Error;
-use std::fmt::Alignment;
-use std::io::prelude::*;
-use std::net::{TcpListener, TcpStream};
-use std::thread;
-use std::time::Duration;
-
-use colored::Colorize;
-
+use crate::chat;
+use crate::terminal;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::*;
 
-use console::Term;
-
-use dialoguer::Input;
-
-use console::style;
-use indicatif::ProgressBar;
-use rand::rngs::OsRng;
-use rsa::{RsaPrivateKey, RsaPublicKey};
-
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
+use sha2::digest::XofReader;
 use sha2::{Digest, Sha256, Sha512};
+use std::error::Error;
+use std::io::Read;
 
-use crate::terminal;
+#[derive(Serialize, Deserialize)]
 
-// let mut hasher = Sha256::new();
-// hasher.update(b"hello world");
-pub fn main() -> Result<(), Box<dyn Error>> {
-    let x = terminal::Terminal::new()?;
-
-    let username = Input::<String>::with_theme(&ColorfulTheme::default())
-        .with_prompt("Enter your username")
-        .validate_with(|input: &String| -> Result<(), &str> {
-            if input.len() >= 4 {
-                Ok(())
-            } else {
-                Err("Please enter a username longer than 4 characters.")
-            }
-        })
-        .interact_text()?;
-
-    let items = vec!["Earth", "Jupiter"];
-    let chosen = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Which room would like to join")
-        .item("Earth")
-        .item("Mars")
-        .item("Jupiter")
-        .interact()?;
-
-    println!("Attempting to join a new room {}", chosen);
-    // let mut client = chat::Client::new(username)?;
-    // println!("This is {} neat", style("quite").cyan());
-    // loop {
-    //     let mut input = String::new();
-    //     std::io::stdin().read_line(&mut input)?;
-    //     client.connection.write(input.trim().as_bytes()).unwrap();
-    // }
-    Ok(())
+struct SocketMessage {
+    r#type: String,
+    data: DataKind,
 }
 
-fn request_username() -> Result<String, std::io::Error> {
-    let mut username = String::new();
-    println!("Please enter your username: ");
-    std::io::stdin().read_line(&mut username)?;
-    while username.trim().len() == 0 {
-        println!("{}", "No username given.".red());
-        println!("Please enter your username: ");
-        std::io::stdin().read_line(&mut username)?;
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+enum DataKind {
+    StringVector(Vec<String>),
+}
 
-        print!("12345");
-        print!("{}", (8u8 as char));
-    }
+pub fn main() -> Result<(), Box<dyn Error>> {
+    // Setup a new terminal context
+    let terminal = terminal::Terminal::new()?;
 
-    Ok(username)
+    // Generate keypair and request the user's username
+    let keypair = terminal.generate_keypair()?;
+    let username = terminal.request_username()?;
+
+    // Create a new client which will connect to the server
+    let mut client = chat::Client::new(username)?;
+
+    // Create a byte buffer to read in the data from the server
+    let mut data = [0 as u8; 200]; // using 50 byte buffer
+
+    while match client.connection.read(&mut data) {
+        Ok(size) => {
+            // Read in the latest message from the socket
+            let data = data[..size].to_vec();
+            let message = String::from_utf8(data).unwrap();
+
+            // Parse the message to determine what we have just recieved
+
+            println!("Message is: {}", message);
+            let parsed_message: SocketMessage = serde_json::from_str(&message).unwrap();
+
+            match parsed_message.data {
+                DataKind::StringVector(data) => {
+                    let chosen = Select::with_theme(&ColorfulTheme::default())
+                        .with_prompt("Which room would like to join")
+                        .items(&data)
+                        .interact()?;
+                }
+            }
+
+            println!("[Server]: {}", message);
+
+            true
+        }
+        Err(_) => {
+            println!("Oh, it looks like something went wrong!");
+            true
+        }
+    } {}
+
+    Ok(())
 }
