@@ -1,28 +1,20 @@
 use crate::chat;
+use crate::chat::SocketMessage;
+use crate::chat::SocketPayloadKind;
 use crate::terminal;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::*;
 
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::Value;
+
 use sha2::digest::XofReader;
 use sha2::{Digest, Sha256, Sha512};
 use std::error::Error;
 use std::io::Read;
+use std::io::Write;
 
-#[derive(Serialize, Deserialize)]
-
-struct SocketMessage {
-    r#type: String,
-    data: DataKind,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum DataKind {
-    StringVector(Vec<String>),
-}
+use serde_json::{Deserializer, Value};
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     // Setup a new terminal context
@@ -35,39 +27,61 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     // Create a new client which will connect to the server
     let mut client = chat::Client::new(username, keypair)?;
 
-    // Create a byte buffer to read in the data from the server
-    let mut data = [0 as u8; 200]; // using 50 byte buffer
+    let values = Deserializer::from_reader(&client.connection).into_iter::<Value>();
 
-    while match client.connection.read(&mut data) {
-        Ok(size) => {
-            // Read in the latest message from the socket
-            let data = data[..size].to_vec();
-            let message = String::from_utf8(data).unwrap();
+    for value in values {
+        let value = value.unwrap();
+        let message: SocketMessage = serde_json::from_value(value).unwrap();
 
-            // Parse the message to determine what we have just recieved
+        match message.payload {
+            chat::SocketPayloadKind::Connected { username } => todo!(),
+            chat::SocketPayloadKind::SetUsername { user_id, username } => todo!(),
+            chat::SocketPayloadKind::Disconnected { username } => todo!(),
+            chat::SocketPayloadKind::CreateRoom { roomId } => todo!(),
+            chat::SocketPayloadKind::JoinRoom { userId, roomId } => todo!(),
+            chat::SocketPayloadKind::ListRooms => todo!(),
+            chat::SocketPayloadKind::Rooms { rooms } => {
+                // Since the user wants to list the available rooms we will ask them which room they would like to join.
+                let chosen = Select::with_theme(&ColorfulTheme::default())
+                    .with_prompt("Which room would like to join")
+                    .items(&rooms)
+                    .interact()?;
 
-            println!("Message is: {}", message);
+                let join_room_message = SocketMessage {
+                    payload: SocketPayloadKind::JoinRoom {
+                        userId: client.user_id.clone(),
+                        roomId: rooms[chosen].clone(),
+                    },
+                };
 
-            let parsed_message: SocketMessage = serde_json::from_str(&message).unwrap();
+                (&client.connection).write_all(&serde_json::to_vec(&join_room_message).unwrap())?;
 
-            match parsed_message.data {
-                DataKind::StringVector(data) => {
-                    let chosen = Select::with_theme(&ColorfulTheme::default())
-                        .with_prompt("Which room would like to join")
-                        .items(&data)
-                        .interact()?;
-                }
+                let user_message = terminal.request_message()?;
+
+                let socket_message = SocketMessage {
+                    payload: SocketPayloadKind::Message {
+                        userId: client.user_id.clone(),
+                        roomId: rooms[chosen].clone(),
+                        message: user_message,
+                    },
+                };
+
+                (&client.connection).write_all(&serde_json::to_vec(&socket_message).unwrap())?;
             }
-
-            println!("[Server]: {}", message);
-
-            true
+            SocketPayloadKind::Connected { username } => todo!(),
+            SocketPayloadKind::SetUsername { user_id, username } => todo!(),
+            SocketPayloadKind::Disconnected { username } => todo!(),
+            SocketPayloadKind::CreateRoom { roomId } => todo!(),
+            SocketPayloadKind::JoinRoom { userId, roomId } => todo!(),
+            SocketPayloadKind::ListRooms => todo!(),
+            SocketPayloadKind::Message {
+                userId,
+                roomId,
+                message,
+            } => todo!(),
+            SocketPayloadKind::Rooms { rooms } => todo!(),
         }
-        Err(_) => {
-            println!("Oh, it looks like something went wrong!");
-            true
-        }
-    } {}
+    }
 
     Ok(())
 }

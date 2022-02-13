@@ -50,6 +50,15 @@ impl Terminal {
 
         Ok(username)
     }
+
+    // Requests the user to enter their message to send
+    pub fn request_message(&self) -> Result<String, Box<dyn Error>> {
+        let message = Input::<String>::with_theme(&*self.theme)
+            .with_prompt("Mesasge")
+            .allow_empty(false)
+            .interact_text()?;
+        Ok(message)
+    }
     /// Generates an asymmetric keypair using OS randomness
     /// and displays a progress bar in the terminal to indicate
     /// the main thread is being block by the keypair generation.  
