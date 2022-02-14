@@ -80,6 +80,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                 message,
             } => todo!(),
             SocketPayloadKind::Rooms { rooms } => todo!(),
+            SocketPayloadKind::Ack => println!("Server has acknowledged our connection!"),
         }
     }
 

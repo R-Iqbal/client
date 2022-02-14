@@ -27,6 +27,7 @@ pub struct SocketMessage {
 #[derive(Serialize, Deserialize)]
 
 pub enum SocketPayloadKind {
+    Ack,
     Connected {
         username: String,
     },
