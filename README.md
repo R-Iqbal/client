@@ -1,12 +1,16 @@
 # Project
 - Implementation of a messaging application using TCP Sockets in Rust
 
-# Installing dependenceis
+## Installing dependenceis
 - Run `cargo build`
 
-# Starting the Client
+
+## Running the application
+### Starting the Server
+- Run `cargo run --bin server`
+- 
+### Starting the Client
 - Run `cargo run --bin client`
 
-# Starting the Server
-- Run `cargo run --bin server`
+
 
