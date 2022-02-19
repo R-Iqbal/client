@@ -1,18 +1,10 @@
 use crate::chat;
-use crate::chat::SocketMessage;
-use crate::chat::SocketPayloadKind;
 use crate::terminal;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::*;
-
-use serde::Deserialize;
-use serde::Serialize;
-
-use sha2::digest::XofReader;
-use sha2::{Digest, Sha256, Sha512};
 use std::error::Error;
-use std::io::Read;
 use std::io::Write;
+use types::socket::{SocketMessage, SocketPayloadKind};
 
 use serde_json::{Deserializer, Value};
 
@@ -34,13 +26,13 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         let message: SocketMessage = serde_json::from_value(value).unwrap();
 
         match message.payload {
-            chat::SocketPayloadKind::Connected { username } => todo!(),
-            chat::SocketPayloadKind::SetUsername { user_id, username } => todo!(),
-            chat::SocketPayloadKind::Disconnected { username } => todo!(),
-            chat::SocketPayloadKind::CreateRoom { roomId } => todo!(),
-            chat::SocketPayloadKind::JoinRoom { userId, roomId } => todo!(),
-            chat::SocketPayloadKind::ListRooms => todo!(),
-            chat::SocketPayloadKind::Rooms { rooms } => {
+            SocketPayloadKind::Connected { username } => todo!(),
+            SocketPayloadKind::SetUsername { user_id, username } => todo!(),
+            SocketPayloadKind::Disconnected { username } => todo!(),
+            SocketPayloadKind::CreateRoom { roomId } => todo!(),
+            SocketPayloadKind::JoinRoom { userId, roomId } => todo!(),
+            SocketPayloadKind::ListRooms => todo!(),
+            SocketPayloadKind::Rooms { rooms } => {
                 // Since the user wants to list the available rooms we will ask them which room they would like to join.
                 let chosen = Select::with_theme(&ColorfulTheme::default())
                     .with_prompt("Which room would like to join")

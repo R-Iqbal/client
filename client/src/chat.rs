@@ -1,61 +1,9 @@
-use std::alloc::System;
-use std::io::prelude::*;
-use std::net::{TcpListener, TcpStream};
-use std::time::SystemTime;
-
-use indicatif::ProgressBar;
-use rand::rngs::OsRng;
-
-use rsa::{PublicKey, RsaPrivateKey, RsaPublicKey};
-use serde::{Deserialize, Serialize};
-use serde_json::Deserializer;
-
 use crate::terminal::Keypair;
-use pkcs1;
-use rsa::pkcs1::FromRsaPublicKey;
-use sha2::{Digest, Sha256, Sha512};
+use sha2::{Digest, Sha256};
 use std::error::Error;
-use std::{thread, time};
-
-pub struct Cli {}
-
-#[derive(Serialize, Deserialize)]
-pub struct SocketMessage {
-    pub payload: SocketPayloadKind,
-}
-
-#[derive(Serialize, Deserialize)]
-
-pub enum SocketPayloadKind {
-    Ack,
-    Connected {
-        username: String,
-    },
-    SetUsername {
-        user_id: String,
-        username: String,
-    },
-    Disconnected {
-        username: String,
-    },
-    CreateRoom {
-        roomId: String,
-    },
-    JoinRoom {
-        userId: String,
-        roomId: String,
-    },
-    ListRooms,
-    Message {
-        userId: String,
-        roomId: String,
-        message: String,
-    },
-    Rooms {
-        rooms: Vec<String>,
-    },
-}
-
+use std::io::prelude::*;
+use std::net::TcpStream;
+use types::socket::{SocketMessage, SocketPayloadKind};
 pub struct Client {
     pub user_id: String,
     pub username: String,

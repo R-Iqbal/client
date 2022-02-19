@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use console::{style, Emoji, Term};
+use console::Term;
 use dialoguer::{
     theme::{ColorfulTheme, Theme},
     Input,
@@ -86,11 +86,3 @@ impl Terminal {
         });
     }
 }
-
-// let items = vec!["Earth", "Jupiter"];
-// let chosen = Select::with_theme(&ColorfulTheme::default())
-//     .with_prompt("Which room would like to join")
-//     .item("Earth")
-//     .item("Mars")
-//     .item("Jupiter")
-//     .interact()?;
