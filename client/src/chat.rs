@@ -3,7 +3,7 @@ use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::io::prelude::*;
 use std::net::TcpStream;
-use types::socket::{SocketMessage, SocketPayloadKind};
+use types::socket::{SocketMessage, SocketPayloadKind, SERVER_ADDRESS, SERVER_PORT};
 pub struct Client {
     pub user_id: String,
     pub username: String,
@@ -14,7 +14,8 @@ pub struct Client {
 impl Client {
     // Creates a new client which connects to the server
     pub fn new(username: String, keypair: Keypair) -> Result<Client, Box<dyn Error>> {
-        let mut connection = TcpStream::connect("127.0.0.1:3040")?;
+        let host = format!("{}:{}", SERVER_ADDRESS, SERVER_PORT);
+        let mut connection = TcpStream::connect(host)?;
 
         // Convert the public key to a PEM format
         let public_key_pem = pkcs1::ToRsaPublicKey::to_pkcs1_pem(&keypair.public_key)?;

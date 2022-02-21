@@ -1,10 +1,13 @@
+pub const SERVER_ADDRESS: &str = "127.0.0.1";
+pub const SERVER_PORT: &str = "3040";
+
 use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SocketMessage {
     pub payload: SocketPayloadKind,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SocketPayloadKind {
     Ack,
     Connected {
@@ -25,12 +28,12 @@ pub enum SocketPayloadKind {
         roomId: String,
     },
     ListRooms,
+    Rooms {
+        rooms: Vec<String>,
+    },
     Message {
         userId: String,
         roomId: String,
         message: String,
-    },
-    Rooms {
-        rooms: Vec<String>,
     },
 }

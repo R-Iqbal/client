@@ -4,6 +4,8 @@ use dialoguer::theme::ColorfulTheme;
 use dialoguer::*;
 use std::error::Error;
 use std::io::Write;
+use std::thread;
+
 use types::socket::{SocketMessage, SocketPayloadKind};
 
 use serde_json::{Deserializer, Value};
@@ -17,7 +19,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let username = terminal.request_username()?;
 
     // Create a new client which will connect to the server
-    let mut client = chat::Client::new(username, keypair)?;
+
+    let client = chat::Client::new(username, keypair)?;
 
     let values = Deserializer::from_reader(&client.connection).into_iter::<Value>();
 
@@ -48,7 +51,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
                 (&client.connection).write_all(&serde_json::to_vec(&join_room_message).unwrap())?;
 
-                let user_message = terminal.request_message()?;
+                let user_message = Input::<String>::with_theme(&ColorfulTheme::default())
+                    .with_prompt("Mesasge")
+                    .allow_empty(false)
+                    .interact_text()
+                    .unwrap();
 
                 let socket_message = SocketMessage {
                     payload: SocketPayloadKind::Message {
@@ -58,8 +65,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                     },
                 };
 
-                (&client.connection).write_all(&serde_json::to_vec(&socket_message).unwrap())?;
+                (&client.connection)
+                    .write_all(&serde_json::to_vec(&socket_message).unwrap())
+                    .unwrap();
             }
+
             SocketPayloadKind::Connected { username } => todo!(),
             SocketPayloadKind::SetUsername { user_id, username } => todo!(),
             SocketPayloadKind::Disconnected { username } => todo!(),
@@ -70,7 +80,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                 userId,
                 roomId,
                 message,
-            } => todo!(),
+            } => println!("{}: {}", userId, message),
             SocketPayloadKind::Rooms { rooms } => todo!(),
             SocketPayloadKind::Ack => println!("Server has acknowledged our connection!"),
         }

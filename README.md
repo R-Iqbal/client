@@ -8,7 +8,7 @@
 ## Running the application
 ### Starting the Server
 - Run `cargo run --bin server`
-- 
+
 ### Starting the Client
 - Run `cargo run --bin client`
 

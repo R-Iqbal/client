@@ -19,3 +19,4 @@ serde_json = "1.0.79"
 pkcs1="0.2.4"
 serde = { version = "1.0.136", features = ["derive"] }
 types = {path = "../types"}
+crossbeam-utils = "0.8.7"
