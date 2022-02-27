@@ -4,6 +4,7 @@ use dialoguer::theme::ColorfulTheme;
 use dialoguer::*;
 use std::error::Error;
 use std::io::Write;
+use std::os::windows::prelude::MetadataExt;
 use std::thread;
 
 use types::socket::{SocketMessage, SocketPayloadKind};
@@ -51,8 +52,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
                 (&client.connection).write_all(&serde_json::to_vec(&join_room_message).unwrap())?;
 
+                // let (x, y) = terminal.term.size();
+
+                // terminal.term.move_cursor_to(0, y.into()).unwrap();
                 let user_message = Input::<String>::with_theme(&ColorfulTheme::default())
-                    .with_prompt("Mesasge")
                     .allow_empty(false)
                     .interact_text()
                     .unwrap();

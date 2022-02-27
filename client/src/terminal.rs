@@ -16,13 +16,14 @@ pub struct Keypair {
 }
 
 pub struct Terminal {
-    term: Term,
+    pub term: Term,
     theme: Box<dyn Theme>,
 }
 impl Terminal {
     pub fn new() -> Result<Terminal, Box<dyn Error>> {
         // Creates a new terminal context and clears the scren
         let term = Term::stdout();
+
         term.clear_screen()?;
 
         let theme = ColorfulTheme::default();
