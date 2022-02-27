@@ -55,33 +55,6 @@ impl Server {
         tx: Sender<String>,
     ) {
         let stream_copy = Arc::new(Mutex::new(stream.try_clone().unwrap()));
-        thread::spawn(move || {
-            // Collect all the messages from the channel
-            // Block until the sender has been dropped
-            println!("Waiting for a message from the broadcast channel!");
-            let broadcast_message = rx.recv().unwrap();
-
-            println!(
-                "Received a message from the broadcast channel: {}",
-                broadcast_message
-            );
-            // Try to parse the actual type from the message
-            let serialized_message: ThreadMessage =
-                serde_json::from_str(&broadcast_message).unwrap();
-
-            let socket_message: SocketMessage = SocketMessage {
-                payload: SocketPayloadKind::Message {
-                    userId: serialized_message.user_id,
-                    roomId: serialized_message.room_id,
-                    message: serialized_message.message,
-                },
-            };
-            // Create a message to send to the client
-            let serialized = &serde_json::to_vec(&socket_message).unwrap();
-
-            let mut stream_guard = stream_copy.lock().unwrap();
-            stream_guard.write_all(&serialized).unwrap();
-        });
 
         thread::spawn(move || {
             // Attempt to deserialize the incoming data from the stream
@@ -160,9 +133,49 @@ impl Server {
     pub fn start_listening(&mut self) {
         let (s1, r1) = bounded::<String>(20);
 
+        let (_s3, r3) = (s1.clone(), r1.clone());
+
+        // Create a mutex which will a vector of the connected client streams
+        let streams = Arc::new(Mutex::new(Vec::<TcpStream>::new()));
+
+        let streams_clone = streams.clone();
+
+        thread::spawn(move || {
+            loop {
+                // Collect all the messages from the channel
+                // Block until the sender has been dropped
+                println!("Waiting for a message from the broadcast channel!");
+                let broadcast_message = r3.recv().unwrap();
+
+                println!(
+                    "Received a message from the broadcast channel: {}",
+                    broadcast_message
+                );
+                // Try to parse the actual type from the message
+                let serialized_message: ThreadMessage =
+                    serde_json::from_str(&broadcast_message).unwrap();
+
+                let socket_message: SocketMessage = SocketMessage {
+                    payload: SocketPayloadKind::Message {
+                        userId: serialized_message.user_id,
+                        roomId: serialized_message.room_id,
+                        message: serialized_message.message,
+                    },
+                };
+                // Create a message to send to the client
+                let serialized = &serde_json::to_vec(&socket_message).unwrap();
+
+                let mut streams = streams.lock().unwrap();
+
+                // Send the message to all of the clients in the system
+                streams
+                    .iter_mut()
+                    .for_each(|stream| stream.write_all(&serialized).unwrap());
+            }
+        });
+
         // For each of the incoming connections create a connection handler
         // to deal with any requests
-
         for stream in self.listener.incoming() {
             println!("A new client has connected!");
             let stream = stream.unwrap();
@@ -177,6 +190,10 @@ impl Server {
             let rooms_arc = Arc::clone(&self.rooms);
 
             let (s2, r2) = (s1.clone(), r1.clone());
+
+            // Acquire the lock on the vecotor of streams and try to clone the created stream
+            let mut guard = streams_clone.lock().unwrap();
+            guard.push(stream.try_clone().unwrap());
 
             Self::connection_handler(clients_arc, rooms_arc, stream, r2, s2);
         }
